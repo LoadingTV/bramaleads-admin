@@ -12,15 +12,16 @@ export default function LeadsPage() {
   if (isError)   return <div className="p-4 text-red-500">Error loading leads</div>;
 
   return (
-    <main className="max-w-3xl mx-auto mt-16 px-6 py-10 bg-white shadow-sm rounded-2xl border border-gray-200">
-      <div className="mb-8 flex justify-between items-center">
-        <h1 className="text-3xl font-semibold">Leads</h1>
-        <Link href="/settings">
+    <main className="max-w-xl mx-auto mt-16 px-6 py-10 bg-white shadow-sm rounded-2xl border border-gray-200">
+      <div className="mb-8">
+        <Link href="/">
           <button className="text-gray-600 hover:text-black transition font-medium">
-            Settings →
+            ← Back to Home
           </button>
         </Link>
       </div>
+
+      <h1 className="text-3xl font-semibold text-gray-900 mb-8 tracking-tight">Leads</h1>
 
       <GlassCard title="Lead List">
         <div className="overflow-x-auto">
@@ -36,9 +37,7 @@ export default function LeadsPage() {
             <tbody>
               {leads.map((lead) => (
                 <tr key={lead.id} className={lead.is_viewed ? '' : 'font-bold'}>
-                  <td className="px-4 py-2">
-                    {lead.first_name} {lead.last_name}
-                  </td>
+                  <td className="px-4 py-2">{lead.first_name} {lead.last_name}</td>
                   <td className="px-4 py-2">{lead.phone}</td>
                   <td className="px-4 py-2">{lead.source_project?.name ?? '—'}</td>
                   <td className="px-4 py-2">{lead.status}</td>
