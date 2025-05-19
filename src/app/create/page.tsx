@@ -1,8 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import Link from 'next/link';
+
+interface Project {
+  id: string;
+  name: string;
+}
 
 export default function CreateLeadPage() {
   const [form, setForm] = useState({
@@ -15,15 +20,31 @@ export default function CreateLeadPage() {
     utmCampaign: '',
     sourceProjectId: '',
   });
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const { data } = await api.get<Project[]>('/projects');
+        setProjects(data);
+      } catch (err) {
+        console.error('Failed to load projects', err);
+      } finally {
+        setLoadingProjects(false);
+      }
+    }
+    fetchProjects();
+  }, []);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const validateEmail = (email: string) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
+  const validateEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async () => {
     if (!validateEmail(form.email)) {
@@ -50,30 +71,72 @@ export default function CreateLeadPage() {
         </Link>
       </div>
 
-      <h1 className="text-3xl font-semibold text-gray-900 mb-8 tracking-tight">Create New Lead</h1>
+      <h1 className="text-3xl font-semibold text-gray-900 mb-8 tracking-tight">
+        Create New Lead
+      </h1>
 
       <div className="space-y-5">
-        <input name="firstName" placeholder="First Name" onChange={handleChange} className={inputClass} />
-        <input name="lastName" placeholder="Last Name" onChange={handleChange} className={inputClass} />
-        <input name="email" placeholder="Email" onChange={handleChange} className={inputClass} />
-        <input name="phone" placeholder="Phone" onChange={handleChange} className={inputClass} />
+        <input
+          name="firstName"
+          placeholder="First Name"
+          onChange={handleChange}
+          className={inputClass}
+        />
+        <input
+          name="lastName"
+          placeholder="Last Name"
+          onChange={handleChange}
+          className={inputClass}
+        />
+        <input
+          name="email"
+          placeholder="Email"
+          onChange={handleChange}
+          className={inputClass}
+        />
+        <input
+          name="phone"
+          placeholder="Phone"
+          onChange={handleChange}
+          className={inputClass}
+        />
 
         <hr className="my-6 border-gray-200" />
 
-        <input name="gclid" placeholder="GCLID (optional)" onChange={handleChange} className={inputClass} />
-        <input name="utmSource" placeholder="UTM Source (optional)" onChange={handleChange} className={inputClass} />
-        <input name="utmCampaign" placeholder="UTM Campaign (optional)" onChange={handleChange} className={inputClass} />
+        <input
+          name="gclid"
+          placeholder="GCLID (optional)"
+          onChange={handleChange}
+          className={inputClass}
+        />
+        <input
+          name="utmSource"
+          placeholder="UTM Source (optional)"
+          onChange={handleChange}
+          className={inputClass}
+        />
+        <input
+          name="utmCampaign"
+          placeholder="UTM Campaign (optional)"
+          onChange={handleChange}
+          className={inputClass}
+        />
 
         <select
           name="sourceProjectId"
           value={form.sourceProjectId}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition"
+          disabled={loadingProjects}
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition disabled:opacity-50"
         >
-          <option value="">Select Source Project</option>
-          <option value="USM">USM</option>
-          <option value="ABADUB">ABADUB</option>
-          <option value="WIX">WIX</option>
+          <option value="">
+            {loadingProjects ? 'Loading projects…' : 'Select Source Project'}
+          </option>
+          {projects.map((proj) => (
+            <option key={proj.id} value={proj.name}>
+              {proj.name}
+            </option>
+          ))}
         </select>
       </div>
 

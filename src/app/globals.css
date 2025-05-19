@@ -6,6 +6,22 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --bg: 0,0,0;
+  --fg: 255,255,255;
+  --border: 55,55,55;
+  --placeholder: 100,100,100;
+}
+@layer components {
+  .card {
+    @apply max-w-xl mx-auto mt-16 px-6 py-10 bg-[rgb(var(--bg)/0.8)] text-[rgb(var(--fg))] border border-[rgb(var(--border))] rounded-2xl shadow-sm;
+  }
+  .input {
+    @apply w-full px-4 py-3 bg-[rgb(var(--bg)/0.5)] text-[rgb(var(--fg))] border border-[rgb(var(--border))] rounded-xl placeholder-[rgb(var(--placeholder))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--fg))] transition;
+  }
+  .btn-primary {
+    @apply mt-8 w-full py-3 bg-[rgb(var(--fg))] text-[rgb(var(--bg))] rounded-xl font-medium tracking-wide transition hover:bg-[rgb(var(--fg)/0.8)];
+  }
+  .text-fg { color: rgb(var(--fg)); }
 }
 
 @theme inline {
@@ -28,3 +44,4 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   padding-top: 4rem;
 }
+
