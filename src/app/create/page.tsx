@@ -4,13 +4,26 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import Link from 'next/link';
 
-interface Project {
-  id: string;
-  name: string;
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  gclid: string;
+  utmSource: string;
+  utmCampaign: string;
+  sourceProjectId: string;
+}
+
+interface AxiosErrorLike {
+  response?: {
+    data?: string;
+  };
+  message?: string;
 }
 
 export default function CreateLeadPage() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormData>({
     firstName: '',
     lastName: '',
     email: '',
@@ -55,8 +68,21 @@ export default function CreateLeadPage() {
     try {
       await api.post('/leads', form);
       alert('Lead submitted!');
-    } catch (err: any) {
-      console.error('Submission error:', err.response?.data || err.message);
+    } catch (err: unknown) {
+      let errorMessage = 'Unknown error';
+
+      if (typeof err === 'object' && err !== null) {
+        const e = err as AxiosErrorLike;
+        if (e.response && e.response.data) {
+          errorMessage = e.response.data;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+
+      console.error('Submission error:', errorMessage);
       alert('Error submitting lead.');
     }
   };
