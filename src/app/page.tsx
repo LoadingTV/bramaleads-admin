@@ -57,9 +57,19 @@ export default function HomePage() {
         className="mb-8"
       >
         <Link href="/create">
-          <button className="px-6 py-2 bg-white text-black rounded-full hover:bg-gray-900 transition duration-300">
-            + Add New Lead
-          </button>
+        <button
+  className="
+    px-6 py-2
+    bg-white text-black
+    rounded-full
+    border-2 border-transparent
+    hover:bg-black hover:text-white hover:border-white
+    transition duration-300
+  "
+>
+  + Add New Lead
+</button>
+
         </Link>
       </motion.div>
 
