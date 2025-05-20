@@ -1,12 +1,9 @@
+// tailwind.config.js
 module.exports = {
-    theme: {
-      extend: {
-        colors: {
-          bg: 'rgb(var(--bg) / <alpha-value>)',
-          fg: 'rgb(var(--fg) / <alpha-value>)',
-          border: 'rgb(var(--border) / <alpha-value>)',
-        }
-      }
-    }
-  }
-  
+  content: [
+    './src/app/**/*.{js,ts,jsx,tsx}',
+    './src/components/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: { extend: {} },
+  plugins: [],
+}
