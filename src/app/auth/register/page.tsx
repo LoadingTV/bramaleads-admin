@@ -3,12 +3,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
 interface RegisterData {
-  name: string;
+  fullName: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -23,33 +23,41 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const onSubmit = async (data: RegisterData) => {
+  const onSubmit: SubmitHandler<RegisterData> = async (data) => {
     if (data.password !== data.confirmPassword) {
-      alert('Passwords do not match');
+      alert('Пароли не совпадают');
       return;
     }
+
+    // Формируем payload строго под CreateUserDto
+    const payload = {
+      fullName: data.fullName.trim(),
+      email: data.email.trim(),
+      password: data.password,
+      role: 'user', // или другой дефолтный роль
+    };
+
     try {
-      await api.post('/auth/register', data);
-      alert('Registration successful – please sign in.');
+      await api.post('/auth/register', payload);
+      alert('Регистрация успешна, теперь можно войти.');
       router.push('/auth/login');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Registration failed');
+      console.error('Registration error:', err.response ?? err);
+      alert(err.response?.data?.message || 'Ошибка регистрации');
     }
   };
 
   return (
     <main className="max-w-xl mx-auto mt-16 px-6 py-10 bg-white shadow-sm rounded-2xl border border-gray-200">
-      <h1 className="text-3xl font-semibold text-gray-900 mb-8 tracking-tight">
-        Create Account
-      </h1>
+      <h1 className="text-3xl font-semibold text-gray-900 mb-8 tracking-tight">Create Account</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <input
-          placeholder="Name"
-          {...register('name', { required: 'Name is required' })}
+          placeholder="Full Name"
+          {...register('fullName', { required: 'Full name is required' })}
           className={inputClass}
         />
-        {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
+        {errors.fullName && <p className="text-red-500 text-sm">{errors.fullName.message}</p>}
 
         <input
           type="email"
@@ -66,7 +74,10 @@ export default function RegisterPage() {
           <input
             type={showPassword ? 'text' : 'password'}
             placeholder="Password"
-            {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'At least 6 characters' } })}
+            {...register('password', {
+              required: 'Password is required',
+              minLength: { value: 6, message: 'At least 6 characters' },
+            })}
             className={inputClass}
           />
           <button

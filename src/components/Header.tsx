@@ -32,12 +32,7 @@ const Header: FC = () => {
   return (
     <header className="flex items-center justify-between bg-white text-black dark:bg-blackBg dark:text-black px-6 py-4 shadow">
       <Link href="/" className="flex items-center text-black">
-        <Image
-          src={isDarkMode ? '/abadub_logo_dark.svg' : '/abadub_logo.svg'}
-          alt="BramaLeads Logo"
-          width={150}
-          height={40}
-        />
+     <h2 className='text-3xl'>Brama</h2>
       </Link>
 
       <nav className="flex items-center space-x-6">
