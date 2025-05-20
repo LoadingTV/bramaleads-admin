@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 
 const navItems = [
   { href: '/leads', label: 'Leads' },
+  { href: '/projects', label: 'Projects' },
   { href: '/settings', label: 'Settings' },
 ]
 
