@@ -144,46 +144,38 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => {
             const IconComponent = stat.icon;
+            const getStatLink = (title: string) => {
+              switch(title) {
+                case 'Total Leads': return '/leads';
+                case 'Active Projects': return '/projects/overview';
+                case 'Monthly Revenue': return '/analytics/revenue';
+                case 'Conversion Rate': return '/analytics/conversion';
+                default: return '#';
+              }
+            };
+            
             return (
-              <GlassCard key={stat.title} animate delay={index * 0.1} className="relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {stat.value}
-                    </p>
-                    <p className={`text-sm flex items-center mt-1 ${
-                      stat.trend === 'up'
-                        ? 'text-green-600 dark:text-green-400'
-                        : stat.trend === 'down'
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {stat.trend === 'up' && (
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" />
-                        </svg>
-                      )}
-                      {stat.trend === 'down' && (
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-                        </svg>
-                      )}
-                      {stat.trend === 'neutral' && (
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5" />
-                        </svg>
-                      )}
-                      {stat.change}
-                    </p>
+              <Link key={stat.title} href={getStatLink(stat.title)}>
+                <GlassCard animate delay={index * 0.1} className="relative overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        {stat.title}
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {stat.value}
+                      </p>
+                      <p className="text-sm text-green-600 dark:text-green-400 flex items-center mt-1">
+                        <ArrowTrendingUpIcon className="w-4 h-4 mr-1" />
+                        {stat.change}
+                      </p>
+                    </div>
+                    <div className={`p-3 bg-gradient-to-br ${stat.color} rounded-xl`}>
+                      <IconComponent className="w-6 h-6 text-white" />
+                    </div>
                   </div>
-                  <div className={`p-3 bg-gradient-to-br ${stat.color} rounded-xl`}>
-                    <IconComponent className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </GlassCard>
+                </GlassCard>
+              </Link>
             );
           })}
         </div>
