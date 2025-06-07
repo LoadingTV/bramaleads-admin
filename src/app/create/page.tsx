@@ -3,6 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import GlassCard from '@/components/GlassCard';
+import { 
+  UserIcon, 
+  EnvelopeIcon, 
+  PhoneIcon, 
+  ArrowLeftIcon,
+  PlusIcon
+} from '@heroicons/react/24/outline';
 
 interface FormData {
   firstName: string;
@@ -13,6 +22,11 @@ interface FormData {
   utmSource: string;
   utmCampaign: string;
   sourceProjectId: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
 }
 
 interface AxiosErrorLike {
@@ -35,6 +49,7 @@ export default function CreateLeadPage() {
   });
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     async function fetchProjects() {
@@ -65,9 +80,26 @@ export default function CreateLeadPage() {
       return;
     }
 
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      alert('Please enter first and last name.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       await api.post('/leads', form);
-      alert('Lead submitted!');
+      alert('Lead submitted successfully!');
+      // Reset form
+      setForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        gclid: '',
+        utmSource: '',
+        utmCampaign: '',
+        sourceProjectId: '',
+      });
     } catch (err: unknown) {
       let errorMessage = 'Unknown error';
 
@@ -83,98 +115,175 @@ export default function CreateLeadPage() {
       }
 
       console.error('Submission error:', errorMessage);
-      alert('Error submitting lead.');
+      alert('Error submitting lead. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <main className="max-w-xl mx-auto mt-16 px-6 py-10 bg-white shadow-sm rounded-2xl border border-gray-200">
-      <div className="mb-8">
-        <Link href="/">
-          <button className="text-gray-600 hover:text-black transition font-medium">
-            ← Back to Home
-          </button>
-        </Link>
-      </div>
-
-      <h1 className="text-3xl font-semibold text-gray-900 mb-8 tracking-tight">
-        Create New Lead
-      </h1>
-
-      <div className="space-y-5">
-        <input
-          name="firstName"
-          placeholder="First Name"
-          onChange={handleChange}
-          className={inputClass}
-        />
-        <input
-          name="lastName"
-          placeholder="Last Name"
-          onChange={handleChange}
-          className={inputClass}
-        />
-        <input
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
-          className={inputClass}
-        />
-        <input
-          name="phone"
-          placeholder="Phone"
-          onChange={handleChange}
-          className={inputClass}
-        />
-
-        <hr className="my-6 border-gray-200" />
-
-        <input
-          name="gclid"
-          placeholder="GCLID (optional)"
-          onChange={handleChange}
-          className={inputClass}
-        />
-        <input
-          name="utmSource"
-          placeholder="UTM Source (optional)"
-          onChange={handleChange}
-          className={inputClass}
-        />
-        <input
-          name="utmCampaign"
-          placeholder="UTM Campaign (optional)"
-          onChange={handleChange}
-          className={inputClass}
-        />
-
-        <select
-          name="sourceProjectId"
-          value={form.sourceProjectId}
-          onChange={handleChange}
-          disabled={loadingProjects}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition disabled:opacity-50"
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 ml-64 pt-16">
+      <div className="p-8">
+        {/* Header */}
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <option value="">
-            {loadingProjects ? 'Loading projects…' : 'Select Source Project'}
-          </option>
-          {projects.map((proj) => (
-            <option key={proj.id} value={proj.name}>
-              {proj.name}
-            </option>
-          ))}
-        </select>
-      </div>
+          <Link href="/">
+            <motion.button
+              className="inline-flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium mb-4"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ArrowLeftIcon className="w-5 h-5" />
+              <span>Back to Dashboard</span>
+            </motion.button>
+          </Link>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            Create New Lead
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Add a new potential customer to your CRM system
+          </p>
+        </motion.div>
 
-      <button
-        onClick={handleSubmit}
-        className="mt-8 w-full bg-black text-white py-3 rounded-xl border border-transparent hover:bg-gray-100 hover:text-black hover:border-black transition text-sm font-medium tracking-wide"
-      >
-        Submit Lead
-      </button>
+        {/* Form */}
+        <div className="max-w-2xl">
+          <GlassCard className="p-8" delay={0.2}>
+            <div className="space-y-6">
+              {/* Personal Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <UserIcon className="w-5 h-5 mr-2" />
+                  Personal Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="relative">
+                    <input
+                      name="firstName"
+                      placeholder="First Name"
+                      value={form.firstName}
+                      onChange={handleChange}
+                      className="w-full pl-4 pr-4 py-3 bg-white/70 dark:bg-slate-700/70 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="relative">
+                    <input
+                      name="lastName"
+                      placeholder="Last Name"
+                      value={form.lastName}
+                      onChange={handleChange}
+                      className="w-full pl-4 pr-4 py-3 bg-white/70 dark:bg-slate-700/70 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <EnvelopeIcon className="w-5 h-5 mr-2" />
+                  Contact Information
+                </h3>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder="Email Address"
+                      value={form.email}
+                      onChange={handleChange}
+                      className="w-full pl-4 pr-4 py-3 bg-white/70 dark:bg-slate-700/70 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="relative">
+                    <input
+                      name="phone"
+                      type="tel"
+                      placeholder="Phone Number"
+                      value={form.phone}
+                      onChange={handleChange}
+                      className="w-full pl-4 pr-4 py-3 bg-white/70 dark:bg-slate-700/70 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Marketing Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Marketing Information
+                </h3>
+                <div className="space-y-4">
+                  <input
+                    name="gclid"
+                    placeholder="GCLID (optional)"
+                    value={form.gclid}
+                    onChange={handleChange}
+                    className="w-full pl-4 pr-4 py-3 bg-white/70 dark:bg-slate-700/70 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                  <input
+                    name="utmSource"
+                    placeholder="UTM Source (optional)"
+                    value={form.utmSource}
+                    onChange={handleChange}
+                    className="w-full pl-4 pr-4 py-3 bg-white/70 dark:bg-slate-700/70 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                  <input
+                    name="utmCampaign"
+                    placeholder="UTM Campaign (optional)"
+                    value={form.utmCampaign}
+                    onChange={handleChange}
+                    className="w-full pl-4 pr-4 py-3 bg-white/70 dark:bg-slate-700/70 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                  <select
+                    name="sourceProjectId"
+                    value={form.sourceProjectId}
+                    onChange={handleChange}
+                    disabled={loadingProjects}
+                    className="w-full pl-4 pr-4 py-3 bg-white/70 dark:bg-slate-700/70 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50"
+                  >
+                    <option value="">
+                      {loadingProjects ? 'Loading projects…' : 'Select Source Project'}
+                    </option>
+                    {projects.map((proj) => (
+                      <option key={proj.id} value={proj.name}>
+                        {proj.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <motion.button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center space-x-2"
+                whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <>
+                    <PlusIcon className="w-5 h-5" />
+                    <span>Create Lead</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </GlassCard>
+        </div>
+      </div>
     </main>
   );
 }
-
-const inputClass =
-  'w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition';

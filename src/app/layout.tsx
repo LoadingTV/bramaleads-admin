@@ -2,10 +2,10 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 import "./globals.css";
 import { Outfit } from "next/font/google";
-import UserSession from "@/components/UserSession";
 import ClientSessionProvider from "@/components/ClientSessionProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -16,9 +16,9 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Remodeling & Construction All Bay Area - ABADUB",
+  title: "Brama CRM - Modern Business Management",
   description:
-    "ABADUB contractor specializes in bringing your home improvement dreams to life. From house remodeling to kitchen renovations, our experienced team provides craftsmanship throughout all Bay Area, San Francisco.",
+    "Brama CRM - comprehensive customer relationship management system for modern businesses. Manage leads, projects, and client relationships efficiently.",
 };
 
 export default function RootLayout({
@@ -27,20 +27,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <head>
+        <link rel="icon" href="/favicon.ico" />
       </head>
       <body
-        className={`${outfit.className} bg-lightBg text-lightText dark:bg-blackBg dark:text-darkText`}
+        className={`${outfit.className} h-full antialiased bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white`}
       >
-
         <ClientSessionProvider>
-          <Header />
-          <UserSession />
-          {children}
-          <div className="flex items-center justify-center w-full">
+          <div className="flex h-full">
+            {/* Sidebar */}
+            <Sidebar />
+            
+            {/* Main content area */}
+            <div className="flex-1 flex flex-col min-h-screen">
+              {/* Header */}
+              <Header />
+              
+              {/* Page content */}
+              <main className="flex-1 overflow-auto">
+                {children}
+              </main>
+              
+         
+              <div className="ml-64">
+                <Footer />
+              </div>
+            </div>
           </div>
-          <Footer />
         </ClientSessionProvider>
         <SpeedInsights />
       </body>
