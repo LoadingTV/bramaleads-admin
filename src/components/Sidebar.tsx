@@ -12,6 +12,9 @@ import {
   DocumentTextIcon, 
   ChartBarIcon,
   CogIcon,
+  UserGroupIcon,
+  PencilSquareIcon,
+  BookOpenIcon
 } from '@heroicons/react/24/outline'
 
 interface NavItem {
@@ -32,6 +35,7 @@ const mainNavItems: NavItem[] = [
   { href: '/team', label: 'Team', icon: UsersIcon },
   { href: '/projects', label: 'Projects', icon: FolderIcon },
   { href: '/calendar', label: 'Calendar', icon: CalendarIcon },
+  { href: '/articles', label: 'Articles', icon: PencilSquareIcon },
   { href: '/documents', label: 'Documents', icon: DocumentTextIcon },
   { href: '/reports', label: 'Reports', icon: ChartBarIcon },
 ]
@@ -60,7 +64,7 @@ const Sidebar: FC = () => {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-2">
         {mainNavItems.map((item) => {
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
           const IconComponent = item.icon
           
           return (
