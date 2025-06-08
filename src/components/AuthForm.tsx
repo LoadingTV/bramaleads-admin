@@ -242,7 +242,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
             {/* Switch Form Type */}
             <div className="text-center">
               <p className="text-gray-300">
-                {type === 'login' ? "Don't have an account? " : "Already have an account? "}
+                {type === 'login' ? "Don&apos;t have an account? " : "Already have an account? "}
                 <button
                   type="button"
                   onClick={() => router.push(type === 'login' ? '/auth/register' : '/auth/login')}

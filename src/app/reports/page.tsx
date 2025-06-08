@@ -7,8 +7,6 @@ import GlassCard from '@/components/GlassCard';
 import { 
   ChartBarIcon, 
   PlusIcon, 
-  CalendarIcon,
-  DocumentChartBarIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   UserGroupIcon,
@@ -16,7 +14,7 @@ import {
   FunnelIcon,
   DocumentArrowDownIcon
 } from '@heroicons/react/24/outline';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer} from 'recharts';
 
 const monthlyData = [
   { month: 'Jan', leads: 45, conversions: 12, revenue: 24000 },

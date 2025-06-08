@@ -228,9 +228,8 @@ export default function TeamPage() {
   const [selectedDepartment, setSelectedDepartment] = useState('All');
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [showMemberModal, setShowMemberModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  // const [showAddModal, setShowAddModal] = useState(false);
+
   const filteredMembers = mockTeamMembers.filter(member => {
     const matchesSearch = 
       member.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -308,7 +307,7 @@ export default function TeamPage() {
               </p>
             </div>
             <motion.button
-              onClick={() => setShowAddModal(true)}
+         
               className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -596,7 +595,7 @@ export default function TeamPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200/50 dark:divide-slate-700/50">
-                  {filteredMembers.map((member, index) => {
+                  {filteredMembers.map((member) => {
                     const StatusIcon = getStatusIcon(member.status);
                     return (
                       <tr

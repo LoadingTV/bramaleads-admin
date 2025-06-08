@@ -12,7 +12,6 @@ import {
   DocumentTextIcon, 
   ChartBarIcon,
   CogIcon,
-  UserGroupIcon
 } from '@heroicons/react/24/outline'
 
 interface NavItem {

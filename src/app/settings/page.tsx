@@ -54,8 +54,20 @@ export default function SettingsPage() {
       await api.put('/settings', { ...form, ...settings });
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
-    } catch (err: any) {
-      console.error('Save error:', err.response?.data || err.message);
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: unknown }; message?: string }).response === 'object'
+      ) {
+        const errorObj = err as { response?: { data?: unknown }; message?: string };
+        console.error('Save error:', errorObj.response?.data || errorObj.message);
+      } else if (err instanceof Error) {
+        console.error('Save error:', err.message);
+      } else {
+        console.error('Save error:', err);
+      }
       alert('Error saving settings.');
     } finally {
       setIsLoading(false);

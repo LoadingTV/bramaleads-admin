@@ -3,7 +3,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import GlassCard from '@/components/GlassCard';
@@ -57,8 +56,12 @@ export default function ProjectsPage() {
       reset();
       setShowCreateForm(false);
       fetchProjects();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create project');
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data) {
+        alert((err.response as { data: { message?: string } }).data.message || 'Failed to create project');
+      } else {
+        alert('Failed to create project');
+      }
     }
   };
 

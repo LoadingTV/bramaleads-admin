@@ -10,11 +10,10 @@ import {
   ArrowLeftIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  CalendarIcon,
   ChartBarIcon,
   BanknotesIcon,
 } from '@heroicons/react/24/outline';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const monthlyRevenueData = [
   { month: 'Jan', revenue: 24000, target: 25000, recurring: 18000, oneTime: 6000 },
