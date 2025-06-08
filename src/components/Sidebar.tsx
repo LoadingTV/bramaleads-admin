@@ -12,9 +12,7 @@ import {
   DocumentTextIcon, 
   ChartBarIcon,
   CogIcon,
-  UserGroupIcon,
-  PencilSquareIcon,
-  BookOpenIcon
+  PencilSquareIcon
 } from '@heroicons/react/24/outline'
 
 interface NavItem {

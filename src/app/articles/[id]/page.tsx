@@ -15,10 +15,8 @@ import {
   EyeIcon,
   PencilIcon,
   TagIcon,
-  ChatBubbleLeftIcon,
   UserIcon,
   CalendarIcon,
-  LinkIcon,
   PrinterIcon,
   FlagIcon,
   StarIcon // Added missing import
@@ -60,7 +58,6 @@ interface Comment {
   replies?: Comment[];
 }
 
-// Mock data - в реальном приложении это будет загружаться из API
 const mockArticle: Article = {
   id: '1',
   title: 'Getting Started with Modern CRM Systems: A Comprehensive Guide',
@@ -143,15 +140,15 @@ const mockComments: Comment[] = [
   {
     id: '1',
     author: { name: 'Alex Johnson' },
-    content: 'Great article! I especially appreciate the implementation best practices section. We\'re currently evaluating CRM systems for our startup.',
+    content: 'Great article! I especially appreciate the implementation best practices section. We are currently evaluating CRM systems for our startup.',
     createdAt: '2024-06-02T14:30:00Z',
     likes: 5,
     replies: [
       {
         id: '1-1',
         author: { name: 'Sarah Davis' },
-        content: 'Thanks Alex! For startups, I\'d recommend starting with a simple solution and scaling up as you grow. Feel free to reach out if you need specific recommendations.',
         createdAt: '2024-06-02T15:15:00Z',
+        content: 'Thanks Alex! For startups, I d recommend starting with a simple solution and scaling up as you grow. Feel free to reach out if you need specific recommendations.',
         likes: 2
       }
     ]
@@ -200,7 +197,7 @@ export default function ArticleViewPage() {
   const params = useParams();
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [showComments, setShowComments] = useState(true);
+  const [showComments] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);

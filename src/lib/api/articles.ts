@@ -1,9 +1,61 @@
 // src/lib/api/articles.ts
 // API endpoints for Articles management
 
-import { NextRequest, NextResponse } from 'next/server';
+// Database Types
+interface DatabaseRow {
+  [key: string]: string | number | boolean | null | undefined;
+}
 
-// Types
+interface ArticleRow extends DatabaseRow {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  project_id: string;
+  author_id: string;
+  category: string;
+  status: 'draft' | 'published' | 'scheduled' | 'archived';
+  featured: number; // boolean as int in DB
+  cover_image_url: string;
+  seo_title: string;
+  seo_description: string;
+  reading_time: number;
+  view_count: number;
+  like_count: number;
+  published_at: string | null;
+  scheduled_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  project_name?: string | null;
+  project_domain?: string | null;
+  author_name?: string | null;
+  author_email?: string | null;
+  tag_names?: string | null;
+}
+
+interface TagRow extends DatabaseRow {
+  id: string;
+  name: string;
+  slug: string;
+  usage_count: number;
+}
+
+interface CountRow extends DatabaseRow {
+  total: number;
+}
+
+interface ProjectMemberRow extends DatabaseRow {
+  user_id: string;
+  role: string;
+}
+
+interface TagRelationRow extends DatabaseRow {
+  name: string;
+}
+
+// API Types
 interface Article {
   id: string;
   title: string;
@@ -45,7 +97,7 @@ interface ArticleCreateRequest {
   content: string;
   projectId: string;
   category?: string;
-  status?: 'draft' | 'published' | 'scheduled';
+  status?: 'draft' | 'published' | 'scheduled' | 'archived';
   featured?: boolean;
   coverImageUrl?: string;
   seoTitle?: string;
@@ -72,11 +124,63 @@ interface ArticleFilters {
   sortOrder?: 'asc' | 'desc';
 }
 
-// Database connection (placeholder - replace with your actual DB setup)
-import { db } from '@/lib/database';
+interface ArticleListResponse {
+  articles: Article[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+interface ArticleTag {
+  name: string;
+  slug: string;
+  usageCount: number;
+}
+
+interface BulkActionResult {
+  success: number;
+  failed: number;
+  errors: string[];
+}
+
+interface TrackViewData {
+  source?: string;
+  referrer?: string;
+}
+
+interface ActivityLogData {
+  userId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  oldValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
+}
+
+interface NotificationData {
+  title: string;
+  message: string;
+  type: string;
+  category: string;
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  actionUrl?: string;
+}
+
+// Database interface (mock - replace with your actual DB setup)
+interface Database {
+  query<T extends DatabaseRow = DatabaseRow>(query: string, params?: (string | number | boolean | null)[]): Promise<T[]>;
+}
+
+// Import or initialize your database instance here
+// Example: import { database } from '../db';
+declare const database: Database;
+
+ 
+ 
 
 // GET /api/articles - List articles with filters
-export async function getArticles(filters: ArticleFilters = {}): Promise<{ articles: Article[]; total: number; page: number; limit: number }> {
+export async function getArticles(filters: ArticleFilters = {}): Promise<ArticleListResponse> {
   const {
     projectId,
     status,
@@ -107,7 +211,7 @@ export async function getArticles(filters: ArticleFilters = {}): Promise<{ artic
     WHERE 1=1
   `;
 
-  const params: any[] = [];
+  const params: (string | number | boolean)[] = [];
 
   if (projectId) {
     query += ` AND a.project_id = ?`;
@@ -131,7 +235,7 @@ export async function getArticles(filters: ArticleFilters = {}): Promise<{ artic
 
   if (featured !== undefined) {
     query += ` AND a.featured = ?`;
-    params.push(featured);
+    params.push(featured ? 1 : 0);
   }
 
   if (search) {
@@ -156,7 +260,7 @@ export async function getArticles(filters: ArticleFilters = {}): Promise<{ artic
   query += ` LIMIT ? OFFSET ?`;
   params.push(limit, (page - 1) * limit);
 
-  const articles = await db.query(query, params);
+  const articles = await database.query<ArticleRow>(query, params);
 
   // Get total count
   let countQuery = `
@@ -165,16 +269,53 @@ export async function getArticles(filters: ArticleFilters = {}): Promise<{ artic
     LEFT JOIN projects p ON a.project_id = p.id
     WHERE 1=1
   `;
-  const countParams: any[] = [];
+  const countParams: (string | number | boolean)[] = [];
 
   // Apply same filters for count
   if (projectId) {
     countQuery += ` AND a.project_id = ?`;
     countParams.push(projectId);
   }
-  // ... (repeat other filters)
 
-  const [{ total }] = await db.query(countQuery, countParams);
+  if (status) {
+    countQuery += ` AND a.status = ?`;
+    countParams.push(status);
+  }
+
+  if (category) {
+    countQuery += ` AND a.category = ?`;
+    countParams.push(category);
+  }
+
+  if (authorId) {
+    countQuery += ` AND a.author_id = ?`;
+    countParams.push(authorId);
+  }
+
+  if (featured !== undefined) {
+    countQuery += ` AND a.featured = ?`;
+    countParams.push(featured ? 1 : 0);
+  }
+
+  if (search) {
+    countQuery += ` AND (a.title LIKE ? OR a.excerpt LIKE ? OR a.content LIKE ?)`;
+    const searchTerm = `%${search}%`;
+    countParams.push(searchTerm, searchTerm, searchTerm);
+  }
+
+  if (tags && tags.length > 0) {
+    const tagPlaceholders = tags.map(() => '?').join(',');
+    countQuery += ` AND a.id IN (
+      SELECT DISTINCT atr.article_id 
+      FROM article_tag_relations atr 
+      JOIN article_tags at ON atr.tag_id = at.id 
+      WHERE at.name IN (${tagPlaceholders})
+    )`;
+    countParams.push(...tags);
+  }
+
+  const countResult = await database.query<CountRow>(countQuery, countParams);
+  const total = countResult[0]?.total || 0;
 
   return {
     articles: articles.map(formatArticle),
@@ -199,7 +340,9 @@ export async function getArticle(id: string): Promise<Article | null> {
     WHERE a.id = ?
   `;
 
-  const [article] = await db.query(query, [id]);
+  const articles = await database.query<ArticleRow>(query, [id]);
+  const article = articles[0];
+  
   if (!article) return null;
 
   // Get tags
@@ -209,18 +352,18 @@ export async function getArticle(id: string): Promise<Article | null> {
     JOIN article_tag_relations atr ON at.id = atr.tag_id
     WHERE atr.article_id = ?
   `;
-  const tags = await db.query(tagQuery, [id]);
+  const tagResults = await database.query<TagRelationRow>(tagQuery, [id]);
 
   return {
     ...formatArticle(article),
-    tags: tags.map((t: any) => t.name)
+    tags: tagResults.map(t => t.name)
   };
 }
 
 // POST /api/articles - Create new article
 export async function createArticle(data: ArticleCreateRequest, authorId: string): Promise<Article> {
   // Check if slug is unique within the project
-  const existingSlug = await db.query(
+  const existingSlug = await database.query<{ id: string }>(
     'SELECT id FROM articles WHERE project_id = ? AND slug = ?',
     [data.projectId, data.slug]
   );
@@ -232,8 +375,11 @@ export async function createArticle(data: ArticleCreateRequest, authorId: string
   // Calculate reading time
   const readingTime = Math.ceil(data.content.split(' ').length / 200);
 
+  const articleId = generateUUID();
+  const now = new Date().toISOString();
+
   const articleData = {
-    id: generateUUID(),
+    id: articleId,
     title: data.title,
     slug: data.slug,
     excerpt: data.excerpt || '',
@@ -242,25 +388,48 @@ export async function createArticle(data: ArticleCreateRequest, authorId: string
     author_id: authorId,
     category: data.category || '',
     status: data.status || 'draft',
-    featured: data.featured || false,
+    featured: data.featured ? 1 : 0,
     cover_image_url: data.coverImageUrl || '',
     seo_title: data.seoTitle || data.title,
     seo_description: data.seoDescription || data.excerpt || '',
     reading_time: readingTime,
+    view_count: 0,
+    like_count: 0,
     scheduled_at: data.scheduledAt || null,
-    published_at: data.status === 'published' ? new Date().toISOString() : null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    published_at: data.status === 'published' ? now : null,
+    created_at: now,
+    updated_at: now
   };
 
   // Insert article
-  await db.query(`
+  await database.query(`
     INSERT INTO articles (
       id, title, slug, excerpt, content, project_id, author_id, category,
       status, featured, cover_image_url, seo_title, seo_description,
-      reading_time, scheduled_at, published_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `, Object.values(articleData));
+      reading_time, view_count, like_count, scheduled_at, published_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    articleData.id,
+    articleData.title,
+    articleData.slug,
+    articleData.excerpt,
+    articleData.content,
+    articleData.project_id,
+    articleData.author_id,
+    articleData.category,
+    articleData.status,
+    articleData.featured,
+    articleData.cover_image_url,
+    articleData.seo_title,
+    articleData.seo_description,
+    articleData.reading_time,
+    articleData.view_count,
+    articleData.like_count,
+    articleData.scheduled_at,
+    articleData.published_at,
+    articleData.created_at,
+    articleData.updated_at
+  ]);
 
   // Handle tags
   if (data.tags && data.tags.length > 0) {
@@ -276,7 +445,12 @@ export async function createArticle(data: ArticleCreateRequest, authorId: string
     newValues: articleData
   });
 
-  return await getArticle(articleData.id) as Article;
+  const newArticle = await getArticle(articleData.id);
+  if (!newArticle) {
+    throw new Error('Failed to retrieve created article');
+  }
+
+  return newArticle;
 }
 
 // PUT /api/articles/:id - Update article
@@ -298,7 +472,7 @@ export async function updateArticle(id: string, data: ArticleUpdateRequest, user
 
   // Check slug uniqueness if changed
   if (data.slug && data.slug !== existingArticle.slug) {
-    const existingSlug = await db.query(
+    const existingSlug = await database.query<{ id: string }>(
       'SELECT id FROM articles WHERE project_id = ? AND slug = ? AND id != ?',
       [existingArticle.projectId, data.slug, id]
     );
@@ -309,19 +483,33 @@ export async function updateArticle(id: string, data: ArticleUpdateRequest, user
   }
 
   // Prepare update data
-  const updateData: any = {
+  const updateData: Record<string, string | number | null> = {
     updated_at: new Date().toISOString()
   };
 
-  const allowedFields = [
-    'title', 'slug', 'excerpt', 'content', 'category', 'status', 
-    'featured', 'coverImageUrl', 'seoTitle', 'seoDescription', 'scheduledAt'
-  ];
+  const fieldMapping: Record<string, string> = {
+    title: 'title',
+    slug: 'slug',
+    excerpt: 'excerpt',
+    content: 'content',
+    category: 'category',
+    status: 'status',
+    featured: 'featured',
+    coverImageUrl: 'cover_image_url',
+    seoTitle: 'seo_title',
+    seoDescription: 'seo_description',
+    scheduledAt: 'scheduled_at'
+  };
 
-  allowedFields.forEach(field => {
-    if (data[field as keyof ArticleUpdateRequest] !== undefined) {
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
-      updateData[dbField] = data[field as keyof ArticleUpdateRequest];
+  Object.keys(fieldMapping).forEach(field => {
+    const value = data[field as keyof ArticleUpdateRequest];
+    if (value !== undefined) {
+      const dbField = fieldMapping[field];
+      if (field === 'featured') {
+        updateData[dbField] = value ? 1 : 0;
+      } else {
+        updateData[dbField] = value as string | number | null;
+      }
     }
   });
 
@@ -339,7 +527,7 @@ export async function updateArticle(id: string, data: ArticleUpdateRequest, user
   const setClause = Object.keys(updateData).map(key => `${key} = ?`).join(', ');
   const values = [...Object.values(updateData), id];
 
-  await db.query(`UPDATE articles SET ${setClause} WHERE id = ?`, values);
+  await database.query(`UPDATE articles SET ${setClause} WHERE id = ?`, values);
 
   // Handle tags if provided
   if (data.tags !== undefined) {
@@ -352,11 +540,16 @@ export async function updateArticle(id: string, data: ArticleUpdateRequest, user
     action: 'update',
     entityType: 'article',
     entityId: id,
-    oldValues: existingArticle,
+    oldValues: { ...existingArticle },
     newValues: updateData
   });
 
-  return await getArticle(id) as Article;
+  const updatedArticle = await getArticle(id);
+  if (!updatedArticle) {
+    throw new Error('Failed to retrieve updated article');
+  }
+
+  return updatedArticle;
 }
 
 // DELETE /api/articles/:id - Delete article
@@ -375,7 +568,7 @@ export async function deleteArticle(id: string, userId: string): Promise<void> {
   }
 
   // Delete article and related data (cascading deletes handle most relations)
-  await db.query('DELETE FROM articles WHERE id = ?', [id]);
+  await database.query('DELETE FROM articles WHERE id = ?', [id]);
 
   // Create activity log
   await createActivityLog({
@@ -383,7 +576,7 @@ export async function deleteArticle(id: string, userId: string): Promise<void> {
     action: 'delete',
     entityType: 'article',
     entityId: id,
-    oldValues: article
+    oldValues: { ...article }
   });
 }
 
@@ -406,11 +599,12 @@ export async function publishArticle(id: string, userId: string): Promise<Articl
     }
   }
 
-  await db.query(`
+  const now = new Date().toISOString();
+  await database.query(`
     UPDATE articles 
     SET status = 'published', published_at = ?, updated_at = ?
     WHERE id = ?
-  `, [new Date().toISOString(), new Date().toISOString(), id]);
+  `, [now, now, id]);
 
   // Create activity log
   await createActivityLog({
@@ -431,36 +625,46 @@ export async function publishArticle(id: string, userId: string): Promise<Articl
     actionUrl: `/articles/${id}`
   });
 
-  return await getArticle(id) as Article;
+  const publishedArticle = await getArticle(id);
+  if (!publishedArticle) {
+    throw new Error('Failed to retrieve published article');
+  }
+
+  return publishedArticle;
 }
 
 // POST /api/articles/:id/analytics - Track article view
-export async function trackArticleView(id: string, data: { source?: string; referrer?: string }): Promise<void> {
+export async function trackArticleView(id: string, data: TrackViewData): Promise<void> {
   // Update view count
-  await db.query('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [id]);
+  await database.query('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [id]);
 
   // Record daily analytics
   const today = new Date().toISOString().split('T')[0];
-  await db.query(`
-    INSERT INTO article_analytics (article_id, date, views, unique_views)
-    VALUES (?, ?, 1, 1)
+  await database.query(`
+    INSERT INTO article_analytics (article_id, date, views, unique_views, source, referrer)
+    VALUES (?, ?, 1, 1, ?, ?)
     ON DUPLICATE KEY UPDATE 
       views = views + 1,
       unique_views = unique_views + 1
-  `, [id, today]);
+  `, [id, today, data.source || null, data.referrer || null]);
 }
 
 // GET /api/articles/tags - Get all tags
-export async function getArticleTags(): Promise<Array<{ name: string; slug: string; usageCount: number }>> {
+export async function getArticleTags(): Promise<ArticleTag[]> {
   const query = `
-    SELECT at.*, COUNT(atr.article_id) as usage_count
+    SELECT at.name, at.slug, COUNT(atr.article_id) as usage_count
     FROM article_tags at
     LEFT JOIN article_tag_relations atr ON at.id = atr.tag_id
-    GROUP BY at.id
+    GROUP BY at.id, at.name, at.slug
     ORDER BY usage_count DESC, at.name ASC
   `;
 
-  return await db.query(query);
+  const results = await database.query<TagRow>(query);
+  return results.map(row => ({
+    name: row.name,
+    slug: row.slug,
+    usageCount: row.usage_count
+  }));
 }
 
 // POST /api/articles/bulk-action - Bulk operations
@@ -468,7 +672,7 @@ export async function bulkArticleAction(
   articleIds: string[], 
   action: 'publish' | 'unpublish' | 'delete' | 'archive',
   userId: string
-): Promise<{ success: number; failed: number; errors: string[] }> {
+): Promise<BulkActionResult> {
   let success = 0;
   let failed = 0;
   const errors: string[] = [];
@@ -480,10 +684,10 @@ export async function bulkArticleAction(
           await publishArticle(id, userId);
           break;
         case 'unpublish':
-          await updateArticle(id, { status: 'draft' }, userId);
+          await updateArticle(id, { id, status: 'draft' }, userId);
           break;
         case 'archive':
-          await updateArticle(id, { status: 'archived' }, userId);
+          await updateArticle(id, { id, status: 'archived' }, userId);
           break;
         case 'delete':
           await deleteArticle(id, userId);
@@ -492,7 +696,8 @@ export async function bulkArticleAction(
       success++;
     } catch (error) {
       failed++;
-      errors.push(`Article ${id}: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      errors.push(`Article ${id}: ${errorMessage}`);
     }
   }
 
@@ -502,7 +707,7 @@ export async function bulkArticleAction(
 // Helper functions
 async function handleArticleTags(articleId: string, tags: string[]): Promise<void> {
   // Remove existing tags
-  await db.query('DELETE FROM article_tag_relations WHERE article_id = ?', [articleId]);
+  await database.query('DELETE FROM article_tag_relations WHERE article_id = ?', [articleId]);
 
   if (tags.length === 0) return;
 
@@ -511,73 +716,76 @@ async function handleArticleTags(articleId: string, tags: string[]): Promise<voi
   
   for (const tagName of tags) {
     const slug = tagName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const tagId = generateUUID();
     
     // Insert tag if it doesn't exist
-    await db.query(`
+    await database.query(`
       INSERT INTO article_tags (id, name, slug, usage_count)
       VALUES (?, ?, ?, 1)
       ON DUPLICATE KEY UPDATE usage_count = usage_count + 1
-    `, [generateUUID(), tagName, slug]);
+    `, [tagId, tagName, slug]);
 
     // Get tag ID
-    const [tag] = await db.query('SELECT id FROM article_tags WHERE slug = ?', [slug]);
-    tagIds.push(tag.id);
+    const tagResults = await database.query<{ id: string }>('SELECT id FROM article_tags WHERE slug = ?', [slug]);
+    if (tagResults.length > 0) {
+      tagIds.push(tagResults[0].id);
+    }
   }
 
   // Create tag relations
   for (const tagId of tagIds) {
-    await db.query(
+    await database.query(
       'INSERT INTO article_tag_relations (id, article_id, tag_id) VALUES (?, ?, ?)',
       [generateUUID(), articleId, tagId]
     );
   }
 }
 
-function formatArticle(row: any): Article {
+function formatArticle(row: ArticleRow): Article {
   return {
     id: row.id,
     title: row.title,
     slug: row.slug,
-    excerpt: row.excerpt,
+    excerpt: row.excerpt || undefined,
     content: row.content,
     projectId: row.project_id,
     authorId: row.author_id,
-    category: row.category,
+    category: row.category || undefined,
     status: row.status,
     featured: Boolean(row.featured),
-    coverImageUrl: row.cover_image_url,
-    seoTitle: row.seo_title,
-    seoDescription: row.seo_description,
-    readingTime: row.reading_time,
+    coverImageUrl: row.cover_image_url || undefined,
+    seoTitle: row.seo_title || undefined,
+    seoDescription: row.seo_description || undefined,
+    readingTime: row.reading_time || undefined,
     viewCount: row.view_count,
     likeCount: row.like_count,
-    publishedAt: row.published_at,
-    scheduledAt: row.scheduled_at,
+    publishedAt: row.published_at || undefined,
+    scheduledAt: row.scheduled_at || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     project: row.project_name ? {
       id: row.project_id,
       name: row.project_name,
-      domain: row.project_domain
+      domain: row.project_domain || undefined
     } : undefined,
     author: row.author_name ? {
       id: row.author_id,
       name: row.author_name,
-      email: row.author_email
+      email: row.author_email || ''
     } : undefined
   };
 }
 
 async function checkProjectPermission(userId: string, projectId: string, action: string): Promise<boolean> {
   // Simplified permission check - in real app, implement proper RBAC
-  const [membership] = await db.query(
+  const memberResults = await database.query<ProjectMemberRow>(
     'SELECT role FROM project_members WHERE user_id = ? AND project_id = ?',
     [userId, projectId]
   );
 
-  if (!membership) return false;
+  if (memberResults.length === 0) return false;
 
-  const { role } = membership;
+  const { role } = memberResults[0];
   
   switch (action) {
     case 'edit':
@@ -590,15 +798,8 @@ async function checkProjectPermission(userId: string, projectId: string, action:
   }
 }
 
-async function createActivityLog(data: {
-  userId: string;
-  action: string;
-  entityType: string;
-  entityId: string;
-  oldValues?: any;
-  newValues?: any;
-}): Promise<void> {
-  await db.query(`
+async function createActivityLog(data: ActivityLogData): Promise<void> {
+  await database.query(`
     INSERT INTO audit_logs (id, user_id, action, entity_type, entity_id, old_values, new_values, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -613,22 +814,14 @@ async function createActivityLog(data: {
   ]);
 }
 
-async function notifyProjectMembers(projectId: string, notification: {
-  title: string;
-  message: string;
-  type: string;
-  category: string;
-  relatedEntityType?: string;
-  relatedEntityId?: string;
-  actionUrl?: string;
-}): Promise<void> {
-  const members = await db.query(
+async function notifyProjectMembers(projectId: string, notification: NotificationData): Promise<void> {
+  const members = await database.query<{ user_id: string }>(
     'SELECT user_id FROM project_members WHERE project_id = ?',
     [projectId]
   );
 
   for (const member of members) {
-    await db.query(`
+    await database.query(`
       INSERT INTO notifications (id, user_id, title, message, type, category, related_entity_type, related_entity_id, action_url, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
@@ -655,14 +848,16 @@ function generateUUID(): string {
 }
 
 // Export all functions for use in API routes
-export {
-  getArticles,
-  getArticle,
-  createArticle,
-  updateArticle,
-  deleteArticle,
-  publishArticle,
-  trackArticleView,
-  getArticleTags,
-  bulkArticleAction
+// (Removed redundant export of already exported functions)
+
+// Export types for use in other modules
+export type {
+  Article,
+  ArticleCreateRequest,
+  ArticleUpdateRequest,
+  ArticleFilters,
+  ArticleListResponse,
+  ArticleTag,
+  BulkActionResult,
+  TrackViewData
 };

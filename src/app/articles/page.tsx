@@ -168,7 +168,7 @@ export default function ArticlesPage() {
                 Content Management
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Create and manage articles for your projects' websites and blogs
+                Create and manage articles for your projects websites and blogs
               </p>
             </div>
             <Link href="/articles/create">

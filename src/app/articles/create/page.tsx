@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import GlassCard from '@/components/GlassCard';
 import { 
@@ -19,9 +20,7 @@ import {
   StarIcon,
   CalendarIcon,
   ClockIcon,
-  GlobeAltIcon,
-  LinkIcon,
-  CogIcon
+  GlobeAltIcon
 } from '@heroicons/react/24/outline';
 
 interface ArticleForm {
@@ -79,7 +78,7 @@ export default function CreateArticlePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [newTag, setNewTag] = useState('');
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [projects] = useState<Project[]>(mockProjects);
   
   const [formData, setFormData] = useState<ArticleForm>({
     title: '',
@@ -108,28 +107,28 @@ export default function CreateArticlePage() {
         .trim();
       handleInputChange('slug', slug);
     }
-  }, [formData.title]);
+  }, [formData.title, formData.slug]);
 
   // Auto-generate SEO title if not set
   useEffect(() => {
     if (formData.title && !formData.seoTitle) {
       handleInputChange('seoTitle', formData.title);
     }
-  }, [formData.title]);
+  }, [formData.title, formData.seoTitle]);
 
   // Auto-generate SEO description if not set
   useEffect(() => {
     if (formData.excerpt && !formData.seoDescription) {
       handleInputChange('seoDescription', formData.excerpt);
     }
-  }, [formData.excerpt]);
+  }, [formData.excerpt , formData.seoDescription]);
 
-  const handleInputChange = (field: keyof ArticleForm, value: any) => {
+const handleInputChange = <K extends keyof ArticleForm>(field: K, value: ArticleForm[K]) => {
     setFormData(prev => ({
-      ...prev,
-      [field]: value
+        ...prev,
+        [field]: value
     }));
-  };
+};
 
   const addTag = (tag: string) => {
     if (tag && !formData.tags.includes(tag)) {
@@ -484,7 +483,7 @@ Code block
                 </select>
                 {selectedProject && !selectedProject.domain && (
                   <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
-                    ⚠️ This project doesn't have a domain configured yet
+                    ⚠️ This project doesnt have a domain configured yet
                   </p>
                 )}
               </div>
@@ -641,14 +640,18 @@ Code block
 
                 {formData.coverImage && (
                   <div className="mt-3">
-                    <img
-                      src={formData.coverImage}
-                      alt="Cover preview"
-                      className="w-full h-32 object-cover rounded-lg"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                    <div className="w-full h-32 relative">
+                      <Image
+                        src={formData.coverImage}
+                        alt="Cover preview"
+                        fill
+                        className="object-cover rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        sizes="100vw"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
