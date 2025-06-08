@@ -8,7 +8,6 @@ import GlassCard from '@/components/GlassCard';
 import { 
   UserIcon, 
   EnvelopeIcon, 
-  PhoneIcon, 
   ArrowLeftIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';

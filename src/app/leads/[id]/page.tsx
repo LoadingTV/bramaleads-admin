@@ -50,6 +50,15 @@ type FormValues = {
   scheduledAt?: string;
 };
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 const STATUS_OPTIONS = [
   { label: 'New', value: 'new', color: '#0088FE', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
   { label: 'In Progress', value: 'in_progress', color: '#00C49F', bgColor: 'bg-green-100 dark:bg-green-900/30' },
@@ -60,18 +69,7 @@ const STATUS_OPTIONS = [
 export default function LeadDetailPage() {
   const params = useParams();
   const id = params.id as string | undefined;
-
-  if (!id) {
-    return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 ml-64 pt-16 flex justify-center items-center">
-        <div className="text-center text-red-500">
-          <ExclamationTriangleIcon className="w-16 h-16 mx-auto mb-4" />
-          <p className="text-xl">Lead ID not found in URL</p>
-        </div>
-      </main>
-    );
-  }
-
+  
   const [lead, setLead] = useState<Lead | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -89,6 +87,8 @@ export default function LeadDetailPage() {
   });
 
   useEffect(() => {
+    if (!id) return;
+    
     async function fetchLead() {
       try {
         setIsLoading(true);
@@ -129,7 +129,7 @@ export default function LeadDetailPage() {
   }, [id, reset]);
 
   const onSubmit: SubmitHandler<FormValues> = async (formData) => {
-    if (!lead) return;
+    if (!lead || !id) return;
 
     const payload: Partial<Lead> = {
       firstName: formData.firstName,
@@ -158,17 +158,29 @@ export default function LeadDetailPage() {
       setLead((prev) =>
         prev ? { ...prev, ...payload, id: prev.id } : prev
       );
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as ApiError;
       console.error('PATCH error:', err.response ?? err);
       alert(
         `Error updating lead: ${
-          err.response?.data?.message || err.message
+          err.response?.data?.message || err.message || 'Unknown error'
         }`
       );
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (!id) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 ml-64 pt-16 flex justify-center items-center">
+        <div className="text-center text-red-500">
+          <ExclamationTriangleIcon className="w-16 h-16 mx-auto mb-4" />
+          <p className="text-xl">Lead ID not found in URL</p>
+        </div>
+      </main>
+    );
+  }
 
   if (isLoading) {
     return (

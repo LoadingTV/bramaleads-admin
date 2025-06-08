@@ -8,8 +8,6 @@ import GlassCard from '@/components/GlassCard';
 import { 
   FolderIcon,
   ArrowLeftIcon,
-  CalendarIcon,
-  UserGroupIcon,
   ChartBarIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -17,10 +15,9 @@ import {
   PlayIcon,
   PauseIcon,
   EyeIcon,
-  PencilIcon,
-  TrashIcon
+  PencilIcon
 } from '@heroicons/react/24/outline';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface ProjectDetail {
   id: string;

@@ -13,7 +13,7 @@ import {
   ArrowTrendingDownIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, FunnelChart, Funnel, LabelList } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const conversionFunnelData = [
   { stage: 'Website Visitors', value: 10000, percentage: 100, color: '#3B82F6' },

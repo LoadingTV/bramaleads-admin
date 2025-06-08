@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import GlassCard from '@/components/GlassCard';
 import { 
-  CalendarIcon,
   PlusIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -122,7 +121,6 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -307,7 +305,6 @@ export default function CalendarPage() {
                       className={`min-h-[120px] p-2 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer ${
                         !day.isCurrentMonth ? 'opacity-50' : ''
                       } ${day.isToday ? 'ring-2 ring-blue-500' : ''}`}
-                      onClick={() => setSelectedDate(day.date)}
                       whileHover={{ scale: 1.02 }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}

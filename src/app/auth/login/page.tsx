@@ -19,6 +19,15 @@ interface LoginData {
   password: string;
 }
 
+interface LoginError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const {
@@ -35,7 +44,8 @@ export default function LoginPage() {
         password: data.password,
       });
       router.push('/');
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as LoginError;
       console.error('Login error:', err.response ?? err);
       alert(err.response?.data?.message || 'Login failed. Please try again.');
     }
@@ -174,7 +184,7 @@ export default function LoginPage() {
             {/* Switch to Register */}
             <div className="text-center">
               <p className="text-gray-300">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link
                   href="/auth/register"
                   className="text-blue-400 hover:text-blue-300 font-medium transition-colors"

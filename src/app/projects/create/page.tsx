@@ -18,6 +18,15 @@ interface Project {
   created_at: string;
 }
 
+interface ProjectError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 const inputClass =
   'w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition';
 
@@ -29,7 +38,8 @@ export default function ProjectsPage() {
     try {
       const { data } = await api.get<Project[]>('/projects');
       setProjects(data);
-    } catch (err) {
+    } catch (error) {
+      console.error('Failed to load projects:', error);
       alert('Failed to load projects');
     }
   };
@@ -44,7 +54,8 @@ export default function ProjectsPage() {
       alert('Project created successfully');
       reset();
       fetchProjects();
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as ProjectError;
       alert(err.response?.data?.message || 'Failed to create project');
     }
   };

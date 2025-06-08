@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { api } from '@/lib/api';
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -31,6 +30,15 @@ interface RegisterData {
 interface PasswordRequirement {
   text: string;
   met: boolean;
+}
+
+interface RegisterError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
 }
 
 export default function RegisterPage() {
@@ -76,14 +84,6 @@ export default function RegisterPage() {
       return;
     }
 
-    const payload = {
-      fullName: data.fullName.trim(),
-      email: data.email.trim().toLowerCase(),
-      password: data.password,
-      department: data.department,
-      role: 'user',
-    };
-
     try {
       setErrorMessage('');
       // Simulate API call
@@ -97,7 +97,8 @@ export default function RegisterPage() {
         router.push('/auth/login');
       }, 3000);
       
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as RegisterError;
       console.error('Registration error:', err);
       setErrorMessage(err.response?.data?.message || 'Registration failed. Please try again.');
       setRegistrationStep('error');
