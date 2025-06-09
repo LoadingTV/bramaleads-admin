@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { api } from '../../lib/api';
+import { api } from '@/lib/api';
 import GlassCard from '@/components/GlassCard';
 import { 
   UserIcon, 

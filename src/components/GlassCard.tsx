@@ -2,16 +2,12 @@ import React, { FC, ReactNode } from 'react'
 import { motion } from 'framer-motion'
 
 interface GlassCardProps {
-  /** Заголовок карточки */
   title?: string
-  /** Содержимое карточки */
   children: ReactNode
-  /** Дополнительные CSS-классы */
   className?: string
-  /** Анимация при появлении */
   animate?: boolean
-  /** Задержка анимации */
   delay?: number
+  onClick?: () => void
 }
 
 const GlassCard: FC<GlassCardProps> = ({ 
@@ -19,21 +15,25 @@ const GlassCard: FC<GlassCardProps> = ({
   children, 
   className = '', 
   animate = true,
-  delay = 0 
+  delay = 0,
+  onClick
 }) => {
   const cardContent = (
-    <div className={`
-      bg-white/70 dark:bg-slate-800/70 
-      backdrop-blur-xl 
-      border border-white/20 dark:border-slate-700/50
-      shadow-xl shadow-black/5 dark:shadow-black/20
-      rounded-2xl 
-      p-6 
-      transition-all duration-300
-      hover:shadow-2xl hover:shadow-black/10 dark:hover:shadow-black/30
-      hover:bg-white/80 dark:hover:bg-slate-800/80
-      ${className}
-    `}>
+    <div
+      onClick={onClick}
+      className={`
+        bg-white/70 dark:bg-slate-800/70 
+        backdrop-blur-xl 
+        border border-white/20 dark:border-slate-700/50
+        shadow-xl shadow-black/5 dark:shadow-black/20
+        rounded-2xl 
+        p-6 
+        transition-all duration-300
+        hover:shadow-2xl hover:shadow-black/10 dark:hover:shadow-black/30
+        hover:bg-white/80 dark:hover:bg-slate-800/80
+        ${className}
+      `}
+    >
       {title && (
         <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
           {title}

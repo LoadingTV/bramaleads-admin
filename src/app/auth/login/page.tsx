@@ -1,53 +1,45 @@
-// src/app/auth/login/page.tsx
 'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoginCredentials } from '@/types/auth';
 import { 
   EnvelopeIcon, 
   LockClosedIcon, 
   EyeIcon, 
-  EyeSlashIcon 
+  EyeSlashIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
-interface LoginData {
-  email: string;
-  password: string;
-}
-
-interface LoginError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-  message?: string;
-}
-
 export default function LoginPage() {
-  const router = useRouter();
+  const { login } = useAuth();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginData>();
+  } = useForm<LoginCredentials>();
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit: SubmitHandler<LoginData> = async (data) => {
+  const onSubmit: SubmitHandler<LoginCredentials> = async (data) => {
     try {
-      await api.post('/auth/login', {
-        email: data.email.trim(),
-        password: data.password,
-      });
-      router.push('/');
+      setError(null);
+      await login(data);
     } catch (error: unknown) {
-      const err = error as LoginError;
-      console.error('Login error:', err.response ?? err);
-      alert(err.response?.data?.message || 'Login failed. Please try again.');
+      if (
+  error instanceof Error ||
+  (typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as Record<string, unknown>).message === 'string')
+) {
+  setError((error as { message: string }).message);
+} else {
+  setError('Login failed. Please try again.');
+}
     }
   };
 
@@ -79,6 +71,17 @@ export default function LoginPage() {
 
         {/* Form Card */}
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center space-x-3"
+            >
+              <ExclamationTriangleIcon className="w-5 h-5 text-red-400" />
+              <span className="text-red-300 text-sm">{error}</span>
+            </motion.div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email Field */}
             <motion.div
@@ -142,23 +145,6 @@ export default function LoginPage() {
                 <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>
               )}
             </motion.div>
-
-            {/* Forgot Password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500 focus:ring-2"
-                />
-                <span className="ml-2 text-sm text-gray-300">Remember me</span>
-              </label>
-              <button
-                type="button"
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>
 
             {/* Submit Button */}
             <motion.button

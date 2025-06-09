@@ -1,11 +1,11 @@
-// src/app/auth/register/page.tsx
 'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
+import { RegisterCredentials } from '@/types/auth';
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -18,36 +18,17 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
-interface RegisterData {
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  department: string;
-  acceptTerms: boolean;
-}
-
 interface PasswordRequirement {
   text: string;
   met: boolean;
 }
 
-interface RegisterError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-  message?: string;
-}
-
 export default function RegisterPage() {
-  const router = useRouter();
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<RegisterData>();
+  const { register: registerUser } = useAuth();
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<RegisterCredentials>();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [registrationStep, setRegistrationStep] = useState<'form' | 'success' | 'error'>('form');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const password = watch('password') || '';
   const confirmPassword = watch('confirmPassword') || '';
@@ -72,68 +53,19 @@ export default function RegisterPage() {
 
   const passwordStrength = getPasswordStrength();
 
-  const onSubmit: SubmitHandler<RegisterData> = async (data) => {
-    if (!data.acceptTerms) {
-      setErrorMessage('You must accept the Terms of Service and Privacy Policy');
-      return;
-    }
-
-    const unmetRequirements = passwordRequirements.filter(req => !req.met);
-    if (unmetRequirements.length > 0) {
-      setErrorMessage('Please ensure all password requirements are met');
-      return;
-    }
-
+  const onSubmit: SubmitHandler<RegisterCredentials> = async (data) => {
     try {
-      setErrorMessage('');
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate success
-      setRegistrationStep('success');
-      
-      // Auto redirect after 3 seconds
-      setTimeout(() => {
-        router.push('/auth/login');
-      }, 3000);
-      
-    } catch (error: unknown) {
-      const err = error as RegisterError;
-      console.error('Registration error:', err);
-      setErrorMessage(err.response?.data?.message || 'Registration failed. Please try again.');
-      setRegistrationStep('error');
+      setError(null);
+      await registerUser({
+        ...data,
+        role: 'employee',  
+      });
+
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      setError(error.message || 'Registration failed. Please try again.');
     }
   };
-
-  if (registrationStep === 'success') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md mx-auto"
-        >
-          <motion.div
-            className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          >
-            <CheckIcon className="w-12 h-12 text-white" />
-          </motion.div>
-          <h1 className="text-3xl font-bold text-white mb-4">Welcome to Brama CRM!</h1>
-          <p className="text-gray-300 mb-6">
-            Your account has been created successfully. You will be redirected to the login page shortly.
-          </p>
-          <div className="flex items-center justify-center space-x-2 text-blue-400">
-            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-4">
@@ -159,14 +91,14 @@ export default function RegisterPage() {
 
         {/* Form Card */}
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
-          {errorMessage && (
+          {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center space-x-3"
             >
               <ExclamationTriangleIcon className="w-5 h-5 text-red-400" />
-              <span className="text-red-300 text-sm">{errorMessage}</span>
+              <span className="text-red-300 text-sm">{error}</span>
             </motion.div>
           )}
 
@@ -222,34 +154,6 @@ export default function RegisterPage() {
               </div>
               {errors.email && (
                 <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
-              )}
-            </motion.div>
-
-            {/* Department */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.45 }}
-            >
-              <label className="block text-sm font-medium text-gray-200 mb-2">
-                Department *
-              </label>
-              <select
-                {...register('department', { required: 'Please select a department' })}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              >
-                <option value="" className="text-gray-900">Select Department</option>
-                <option value="Sales" className="text-gray-900">Sales</option>
-                <option value="Marketing" className="text-gray-900">Marketing</option>
-                <option value="Engineering" className="text-gray-900">Engineering</option>
-                <option value="Design" className="text-gray-900">Design</option>
-                <option value="Product" className="text-gray-900">Product</option>
-                <option value="Support" className="text-gray-900">Support</option>
-                <option value="HR" className="text-gray-900">Human Resources</option>
-                <option value="Finance" className="text-gray-900">Finance</option>
-              </select>
-              {errors.department && (
-                <p className="text-red-400 text-sm mt-1">{errors.department.message}</p>
               )}
             </motion.div>
 
@@ -385,7 +289,6 @@ export default function RegisterPage() {
                 <button type="button" className="text-blue-400 hover:text-blue-300 underline">
                   Privacy Policy
                 </button>
-                . I understand that my data will be processed according to these agreements.
               </label>
             </motion.div>
             {errors.acceptTerms && (
